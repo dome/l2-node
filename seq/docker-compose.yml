@@ -1,0 +1,100 @@
+services:
+  da-server:
+    image:  ghcr.io/otternode-io/ott-op-stack-1103
+    restart: always
+    command: >
+      /app/da-server
+      --s3.bucket=otter-da
+      --s3.endpoint=b39d91b4579b45c988fc9e31ef98fad1.r2.cloudflarestorage.com
+      --s3.access-key-id=19847cf50f27f9d3058f498b60de1635
+      --s3.access-key-secret=fa79938488a6d3ef12b375fb5f14852ee1de7c98055c47a40eae537a9a5d42a7
+      --addr=0.0.0.0
+      --port=3100
+      --log.level=debug
+      --generic-commitment="false"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+
+  op-reth: 
+    image:  ghcr.io/otternode-io/ott-op-stack-1103
+    user: root
+    entrypoint: /op-reth-entrypoint
+    volumes:
+        - ./data/op-reth:/datadir
+        - ../config:/config
+        - ./op-reth-entrypoint:/op-reth-entrypoint
+    restart: always
+    ports:
+      - 9545:8545
+      - 9546:8546
+      - 30301:30301
+    env_file:
+      - ../config/.env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+
+  op-node: 
+    image:  ghcr.io/otternode-io/ott-op-stack-1103
+    user: root
+    depends_on:
+      - op-reth
+    entrypoint: /op-node-entrypoint
+    ports:
+      - 9223:9223/tcp
+      - 9223:9223/udp
+    restart: always
+    volumes:
+        - ../config:/config
+        - ./op-node-entrypoint:/op-node-entrypoint
+        - ./data:/data
+        - ./data/op_log:/op_log
+    env_file:
+      - ../config/.env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+
+  op-batcher:
+    image:  ghcr.io/otternode-io/ott-op-stack-1103:latest
+    user: root
+    depends_on:
+      - op-reth
+      - op-node
+    ports:
+      - 8548:8548
+    entrypoint: /op-batcher-entrypoint
+    volumes:
+        - ../config:/config
+        - ./op-batcher-entrypoint:/op-batcher-entrypoint
+    env_file:
+      - ../config/.env
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+
+  op-proposer:
+    image:  ghcr.io/otternode-io/ott-op-stack-1103
+    user: root
+    entrypoint: /op-proposer-entrypoint
+    restart: always
+    volumes:
+        - ../config:/config
+        - ./op-proposer-entrypoint:/op-proposer-entrypoint
+    env_file:
+      - ../config/.env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
