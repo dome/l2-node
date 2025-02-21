@@ -18,6 +18,7 @@ exec /app/op-reth node --datadir /datadir \
   --rpc.eth-proof-window=1209600 \
   --rpc.max-blocks-per-filter=2200000 \
   --p2p-secret-key=/config/reth-node-key \
+  --txpool.minimal-protocol-fee=0 \
   --port=30301
 
 #  --rollup.sequencer-http=$RETH_SEQUENCER_HTTP \
